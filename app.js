@@ -5,13 +5,18 @@ function log(s) {
 
 function onYouTubePlayerAPIReady() {
     log('player api is ready');
-    tweetCollectionView.playFirst();
+    window.tweets = new Tweets();
+    window.tweetCollectionView = new TweetCollectionView({
+        collection: tweets,
+        el: $(".tweets")[0]
+    });
+    tweetCollectionView.render();
 }
 
 
 $(function(){
     
-    var Tweet = Backbone.Model.extend({
+    window.Tweet = Backbone.Model.extend({
 
         getYoutubeId: function() {
             var urls = this.get('entities').urls;
@@ -41,7 +46,7 @@ $(function(){
         }
     });
     
-    var TweetView = Backbone.View.extend({
+    window.TweetView = Backbone.View.extend({
 
         tagName: 'div',
         className: 'tweet',
@@ -63,47 +68,110 @@ $(function(){
         }
     });
     
-    var Tweets = Backbone.Collection.extend({
+    window.Tweets = Backbone.Collection.extend({
         model: Tweet,
 
-        comparator: function(t) {
-            return t.get("id");
+        initialize: function () {
+            this._loadTweets();
         },
 
-        removeRetweets: function () {
-            log('remove tweets');
-            this.models = this.filter(function(t){
-                return !t.isRetweet();
+        loadSomeMore: function () {
+            log('loading some more tweets');
+            lastTweet = this.max(function(t){return t.id});
+            log('max id: ' + lastTweet.id);
+            this._loadTweets(lastTweet.id);
+        },
+
+        _loadTweets: function(sinceId) {
+            log('loading tweets');
+            var that = this;
+            params = {
+                q: '%23cazhareketi', 
+                include_entities: 1,
+                rpp: 30,
+                result_type: 'recent'
+            };
+            if (typeof sinceId !== 'undefined') {
+                params.since_id = sinceId;
+            } else {
+                //params.until = '2012-04-02';
+            }
+            $.ajax({
+                type: "GET",
+                dataType: "JSONP",
+                url: "http://search.twitter.com/search.json",
+                data: params,
+
+                success: function(data){
+                    log("fetched " + data.results.length + ' tweets');
+                    sorted = _.sortBy(data.results, function(t){return t.id});
+                    sorted.forEach(function(t){
+                        log("adding " + t.id);
+                        tweet = new Tweet(t);
+                        if (!tweet.isRetweet()) {
+                            that.add(tweet);
+                        }
+                    });
+                    tweetCollectionView.playNext();
+                }
             });
-        }
+        },
     });
     
-    var TweetCollectionView = Backbone.View.extend({
+    window.TweetCollectionView = Backbone.View.extend({
 
         initialize: function() {
-            var that = this;
+            // bind the functions 'add' and 'remove' to the view.
+            _(this).bindAll('add', 'remove');
+
             this._tweetViews = [];
             this.currentTrack = 0;
          
-            this.collection.each(function(tweet) {
-                that._tweetViews.push(new TweetView({model : tweet}));
-            });
+            // add each tweet to the view
+            this.collection.each(this.add);
+         
+            // bind this view to the add and remove events of the collection!
+            this.collection.bind('add', this.add);
+            this.collection.bind('remove', this.remove);
+        },
+ 
+        add : function(tweet) {
+          // We create an updating tweet view for each tweet that is added.
+          var tv = new TweetView({
+            model : tweet
+          });
+       
+          // And add it to the collection so that it's easy to reuse.
+          this._tweetViews.push(tv);
+       
+          // If the view has been rendered, then
+          // we immediately append the rendered tweet.
+          if (this._rendered) {
+            $(this.el).append(tv.render().el);
+          }
+        },
+       
+        remove : function(model) {
+          var viewToRemove = _(this._tweetViews).select(function(tv) { return tv.model === model; })[0];
+          this._tweetViews = _(this._tweetViews).without(viewToRemove);
+       
+          if (this._rendered) viewToRemove.$el.remove();
         },
      
         render: function() {
             var that = this;
-            // Clear out this element.
-            $(this.el).empty();
-       
-            // Render each sub-view and append it to the parent view's element.
+
+            // We keep track of the rendered state of the view
+            this._rendered = true;
+         
+            this.$el.empty();
+         
+            // Render each Rweet View and append them.
             _(this._tweetViews).each(function(tv) {
-                $(that.el).append(tv.render().el);
+              that.$el.append(tv.render().el);
             });
-        },
-  
-        playFirst: function() {
-            this.currentTrack = 0;
-            this._playCurrent();
+         
+            return this;
         },
   
         _playCurrent: function() {
@@ -113,10 +181,13 @@ $(function(){
         },
   
         playNext: function() {
+            if (this._tweetViews.length == 0) return;
             if (this.currentTrack < this._tweetViews.length - 1) {
                 this._tweetViews[this.currentTrack].$el.removeClass("well");
                 this.currentTrack++;
                 this._playCurrent();
+            } else {
+                tweets.loadSomeMore();
             }
         },
   
@@ -129,7 +200,7 @@ $(function(){
         }
     });
     
-    var PlayerView = Backbone.View.extend({
+    window.PlayerView = Backbone.View.extend({
 
         player: null,
 
@@ -176,26 +247,5 @@ $(function(){
         },
     });
     
-    
-    $.ajax({
-        type: "GET",
-        dataType: "JSONP",
-        url: "http://search.twitter.com/search.json",
-        data: {
-            q: '%23cazhareketi', 
-            include_entities: 1,
-            rpp: 30
-        },
-
-        success: function(data){
-            var tweets = new Tweets(data.results);
-            tweets.removeRetweets();
-            window.tweetCollectionView = new TweetCollectionView({
-                collection: tweets,
-                el: $(".tweets")[0]
-            });
-            tweetCollectionView.render();
-            window.playerView = new PlayerView({el: $('.video')[0]});
-        }
-    });
+    window.playerView = new PlayerView({el: $('.video')[0]});
 });
