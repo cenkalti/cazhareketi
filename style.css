@@ -1,0 +1,17 @@
+@font-face {
+    font-family: 'Sanchez-Light';
+    src: url('webfonts/20EAD5_0_0.eot') format('embedded-opentype'),url('webfonts/20EAD5_0_0.woff') format('woff'),url('webfonts/20EAD5_0_0.ttf') format('truetype');
+}
+body {margin:0; padding: 0; background: #0099CC url('texture.jpg');}
+.container {width:520px; margin: 0 auto;}
+.header {background: #0099CC url('texture.jpg'); position:fixed; box-shadow: 0 14px 20px -20px black;}
+h1.logo {margin:0; padding:0;font:normal 88px/140px'Sanchez-Light'; letter-spacing: -4px; color: #FFF; background-color: #0099CC url('texture.jpg');width: 520px;}
+.video {width:520px; height:269px; margin: 0 auto;text-align:center;padding-bottom: 20px;}
+.tweets {padding-top: 460px; width:470px; margin: 0 auto;}
+.tweet {margin: 0 0 10px 0; padding: 14px 20px; }
+.tweet p {margin:0; padding:0; font:normal 16px/21px Helvetica,Arial,Sans-serif;color: #FFF;}
+.tweet a {font:normal 16px/21px Helvetica,Arial,Sans-serif;color: #FFF; }
+.tweet .fullname a {text-decoration:none; font:normal 12px/12px Helvetica,Arial,Sans-serif;color: #69BFE8;}     
+.tweet img {margin-right: 10px; float:left; margin-top: 6px; border-radius: 5px 5px 5px 5px;}
+.well {background-color: #46B8DF;border-radius: 10px;}
+.well .fullname a {text-decoration:none; font:normal 12px/12px Helvetica,Arial,Sans-serif;color: #FFF;}
