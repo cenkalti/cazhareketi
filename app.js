@@ -13,12 +13,12 @@ $(function(){
     
     var Tweet = Backbone.Model.extend({
 
-        get_youtube_id: function() {
+        getYoutubeId: function() {
             var urls = this.get('entities').urls;
             if (urls.length > 0) {
                 url = urls[0].expanded_url;
                 log(url);
-                m = url.match(/\?v\=(.*)&+?/);  // http://www.youtube.com/watch?v=W-RfzP_aTP8&feature=youtube_gdata_player
+                m = url.match(/\?v\=(.*)&?/);  // http://www.youtube.com/watch?v=W-RfzP_aTP8&feature=youtube_gdata_player
                 if (!m) {
                     m = url.match(/youtu.be\/(.*)/);  // http://youtu.be/_xAgWNjuRik
                 }
@@ -26,6 +26,17 @@ $(function(){
                 if (m) {
                     return m[1];
                 }
+            }
+        },
+
+        isRetweet: function() {
+            m = this.get('text').match(/^RT/);
+            if (m) {
+                log('this is a retweet');
+                log(this.get('text'));
+                return true;
+            } else {
+                return false;
             }
         }
     });
@@ -42,7 +53,7 @@ $(function(){
         },
 
         play: function() {
-            id = this.model.get_youtube_id();
+            id = this.model.getYoutubeId();
             log(id);
             if (id) {
                 playerView.play(id);
@@ -53,7 +64,18 @@ $(function(){
     });
     
     var Tweets = Backbone.Collection.extend({
-        model: Tweet
+        model: Tweet,
+
+        comparator: function(t) {
+            return t.get("id");
+        },
+
+        removeRetweets: function () {
+            log('remove tweets');
+            this.models = this.filter(function(t){
+                return !t.isRetweet();
+            });
+        }
     });
     
     var TweetCollectionView = Backbone.View.extend({
@@ -80,13 +102,29 @@ $(function(){
         },
   
         playFirst: function() {
-            this._tweetViews[0].play();
+            this.currentTrack = 0;
+            this._playCurrent();
+        },
+  
+        _playCurrent: function() {
+            var currentTweetView = this._tweetViews[this.currentTrack];
+            currentTweetView.$el.addClass("well");
+            currentTweetView.play();
         },
   
         playNext: function() {
             if (this.currentTrack < this._tweetViews.length - 1) {
+                this._tweetViews[this.currentTrack].$el.removeClass("well");
                 this.currentTrack++;
-                this._tweetViews[this.currentTrack].play();
+                this._playCurrent();
+            }
+        },
+  
+        playPrevious: function() {
+            if (this.currentTrack > 0) {
+                this._tweetViews[this.currentTrack].$el.removeClass("well");
+                this.currentTrack--;
+                this._playCurrent();
             }
         }
     });
@@ -111,8 +149,10 @@ $(function(){
                 height: '264',
                 width: '470',
                 videoId: youtube_id,
+                //playerVars: {origin: "http://pil.li"},
                 events: {
                   'onReady': this.onPlayerReady,
+                  'onError': this.onPlayerError,
                   'onStateChange': this.onPlayerStateChange
                 }
             });
@@ -121,6 +161,11 @@ $(function(){
         onPlayerReady: function(event) {
             log('player is ready');
             event.target.playVideo();
+        },
+
+        onPlayerError: function(event) {
+            log('player error');
+            tweetCollectionView.playNext();
         },
 
         onPlayerStateChange: function(event) {
@@ -136,10 +181,15 @@ $(function(){
         type: "GET",
         dataType: "JSONP",
         url: "http://search.twitter.com/search.json",
-        data: {q: '%23cazhareketi', include_entities: 1},
+        data: {
+            q: '%23cazhareketi', 
+            include_entities: 1,
+            rpp: 30
+        },
 
         success: function(data){
             var tweets = new Tweets(data.results);
+            tweets.removeRetweets();
             window.tweetCollectionView = new TweetCollectionView({
                 collection: tweets,
                 el: $(".tweets")[0]
