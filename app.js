@@ -73,6 +73,9 @@ $(function(){
 
         initialize: function () {
             this._loadTweets();
+            setInterval(function(){
+                this._loadTweets();
+            }, 60000);
         },
 
         loadSomeMore: function () {
@@ -112,7 +115,9 @@ $(function(){
                             that.add(tweet);
                         }
                     });
-                    tweetCollectionView.playNext();
+                    if (!playerView.isPlaying()) {
+                        tweetCollectionView.playNext();
+                    }
                 }
             });
         },
@@ -227,6 +232,10 @@ $(function(){
                   'onStateChange': this.onPlayerStateChange
                 }
             });
+        },
+
+        isPlaying: function () {
+            return this.player;
         },
 
         onPlayerReady: function(event) {
