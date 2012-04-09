@@ -135,8 +135,6 @@ $(function(){
             };
             if (typeof sinceId !== 'undefined') {
                 params.since_id = sinceId;
-            } else {
-                //params.until = '2012-04-02';
             }
             $.ajax({
                 type: "GET",
@@ -169,7 +167,7 @@ $(function(){
             _(this).bindAll('add', 'remove');
 
             this._tweetViews = [];
-            this.currentTrack = 0;
+            this.currentTrack = -1;
          
             // add each tweet to the view
             this.collection.each(this.add);
@@ -227,7 +225,9 @@ $(function(){
         playNext: function() {
             if (this._tweetViews.length == 0) return;
             if (this.currentTrack < this._tweetViews.length - 1) {
-                this._tweetViews[this.currentTrack].$el.removeClass("well");
+                if (this.currentTrack > -1) {
+                    this._tweetViews[this.currentTrack].$el.removeClass("well");
+                }
                 this.currentTrack++;
                 this._playCurrent();
             } else {
