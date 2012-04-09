@@ -248,6 +248,11 @@ $(function(){
 
         player: null,
 
+        events: {
+            "click .prev":          "prev",
+            "click .next":          "next"
+        },
+
         initialize: function() {
             // This code loads the IFrame Player API code asynchronously.
             var tag = document.createElement('script');
@@ -264,13 +269,20 @@ $(function(){
                 height: '264',
                 width: '470',
                 videoId: youtube_id,
-                //playerVars: {origin: "http://pil.li"},
                 events: {
                   'onReady': this.onPlayerReady,
                   'onError': this.onPlayerError,
                   'onStateChange': this.onPlayerStateChange
                 }
             });
+        },
+
+        prev: function () {
+            tweetCollectionView.playPrevious();
+        },
+
+        next: function () {
+            tweetCollectionView.playNext();
         },
 
         isPlaying: function () {
@@ -283,7 +295,7 @@ $(function(){
         },
 
         onPlayerError: function(event) {
-            log('player error');
+            log('player error: ' + event.data);
             tweetCollectionView.playNext();
         },
 
