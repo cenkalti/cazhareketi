@@ -215,11 +215,23 @@ $(function(){
          
             return this;
         },
+
+        scrollToPlayingTweet: function () {
+            this.$el.scrollTop(0);
+        },
   
         _playCurrent: function() {
             var currentTweetView = this._tweetViews[this.currentTrack];
             currentTweetView.$el.addClass("well");
             currentTweetView.play();
+            this._scrollToCurrentTweet();
+        },
+
+        _scrollToCurrentTweet: function() {
+            var currentTweetView = this._tweetViews[this.currentTrack];
+            $('body').animate({
+                scrollTop: currentTweetView.$el.offset().top - 460
+            }, 1000);
         },
   
         playNext: function() {
