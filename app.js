@@ -14,6 +14,40 @@ function onYouTubePlayerAPIReady() {
 }
 
 
+// parseUri 1.2.2
+// (c) Steven Levithan <stevenlevithan.com>
+// MIT License
+
+function parseUri (str) {
+    var o   = parseUri.options,
+        m   = o.parser[o.strictMode ? "strict" : "loose"].exec(str),
+        uri = {},
+        i   = 14;
+
+    while (i--) uri[o.key[i]] = m[i] || "";
+
+    uri[o.q.name] = {};
+    uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
+        if ($1) uri[o.q.name][$1] = $2;
+    });
+
+    return uri;
+};
+
+parseUri.options = {
+    strictMode: false,
+    key: ["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"],
+    q:   {
+        name:   "queryKey",
+        parser: /(?:^|&)([^&=]*)=?([^&]*)/g
+    },
+    parser: {
+        strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+        loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+    }
+};
+
+
 $(function(){
     
     window.Tweet = Backbone.Model.extend({
@@ -23,14 +57,18 @@ $(function(){
             if (urls.length > 0) {
                 url = urls[0].expanded_url;
                 log(url);
-                m = url.match(/\?v\=(.*)&?/);  // http://www.youtube.com/watch?v=W-RfzP_aTP8&feature=youtube_gdata_player
-                if (!m) {
-                    m = url.match(/youtu.be\/(.*)/);  // http://youtu.be/_xAgWNjuRik
+                p = parseUri(url);
+                log(p);
+                host = p.host;
+                if (host == "youtube.com" || host == "www.youtube.com") {
+                    log('youtube.com link');
+                    id = p.queryKey.v;
+                } else if (host == "youtu.be") {
+                    log('youtu.be link');
+                    id = p.path.substr(1);
                 }
-                log(m);
-                if (m) {
-                    return m[1];
-                }
+                log('id = ' + id);
+                return id;
             }
         },
 
