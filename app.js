@@ -110,9 +110,10 @@ $(function(){
         model: Tweet,
 
         initialize: function () {
+            var that = this;
             this._loadTweets();
             setInterval(function(){
-                this._loadTweets();
+                that._loadTweets();
             }, 60000);
         },
 
