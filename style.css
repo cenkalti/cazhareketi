@@ -1,21 +1,103 @@
 @font-face {
-    font-family: 'Sanchez-Light';
-    src: url('webfonts/20EAD5_0_0.eot') format('embedded-opentype'),url('webfonts/20EAD5_0_0.woff') format('woff'),url('webfonts/20EAD5_0_0.ttf') format('truetype');
+	font-family: 'Sanchez-Light';
+	src: url('webfonts/20EAD5_0_0.eot') format('embedded-opentype'), url('webfonts/20EAD5_0_0.woff') format('woff'),url('webfonts/20EAD5_0_0.ttf') format('truetype');
 }
-body {margin:0; padding: 0; background: #0099CC url('texture.jpg');}
-.container {width:520px; margin: 0 auto;}
-.header {background: #0099CC url('texture.jpg'); position:fixed; box-shadow: 0 20px 20px -25px black;}
-h1.logo {margin:0; text-align:center; padding:0;font:normal 82px/140px'Sanchez-Light', Helvetica, Arial; letter-spacing: -3px; color: #FFF; background-color: #0099CC url('texture.jpg');width: 520px;}
-.video {width:520px; height:269px; margin: 0 auto;text-align:center;padding-bottom: 20px;}
-.tweets {padding-top: 460px; width:470px; margin: 0 auto 1000px auto;}
-.tweet {margin: 0 0 30px 0; padding: 0px 20px;  }
-.tweet p {margin:0 0 0 58px; padding:0; font:normal 16px/21px Helvetica,Arial,Sans-serif;color: #FFF;}
-.tweet p a {font:normal 16px/21px Helvetica,Arial,Sans-serif;color: #FFF; text-decoration:underline;}
-.tweet .fullname a {text-decoration:none; font:normal 12px/12px Helvetica,Arial,Sans-serif;color: #69BFE8;}     
-.tweet img {margin-right: 10px; float:left; margin-top: 6px; border-radius: 5px 5px 5px 5px;}
-.well {background-color: #46B8DF;border-radius: 10px; padding: 14px 20px; }
-.well .fullname a {text-decoration:none; font:normal 12px/12px Helvetica,Arial,Sans-serif;color: #FFF;}
-.prev {position:fixed; top:250px; left: 50%; margin-left: -290px; color: #FFF; text-decoration:none; font: normal 2em/1em arial;}
-.next {position:fixed; top:250px; left: 50%; margin-left: 258px; color: #FFF; text-decoration:none; font: normal 2em/1em arial;}
-a:hover.prev {color: #46B8DF}
-a:hover.next {color: #46B8DF}
+body {
+	background: #0099CC url('texture.jpg');
+	margin: 0;
+	padding: 0;
+}
+.container {
+	margin: 0 auto;
+	width: 520px;
+}
+.header {
+	background: #0099CC url('texture.jpg');
+	box-shadow: 0 20px 20px -25px black;
+	position: fixed;
+}
+h1.logo {
+	background-color: #0099CC url('texture.jpg');
+	color: #FFF;
+	font-family: 'Sanchez-Light', Helvetica, Arial;
+	font-size: 82px;
+	font-weight: normal;
+	letter-spacing: -3px;
+	line-height: 140px;
+	margin: 0;
+	padding: 0;
+	text-align: center;
+	width: 520px;
+}
+.video {
+	height: 269px;
+	margin: 0 auto;
+	padding-bottom: 20px;
+	text-align: center;
+	width: 520px;
+}
+.tweets {
+	margin: 0 auto 1000px auto;
+	padding-top: 460px;
+	width: 470px;
+}
+.tweet {
+	margin: 0 0 30px 0;
+	padding: 0px 20px;
+}
+.tweet p {
+	color: #FFF;
+	font: normal 16px/21px Helvetica,Arial,Sans-serif;
+	margin: 0 0 0 58px;
+	padding: 0;
+}
+.tweet p a {
+	color: #FFF;
+	font: normal 16px/21px Helvetica,Arial,Sans-serif;
+	text-decoration: underline;
+}
+.tweet .fullname a {
+	color: #69BFE8;
+	font: normal 12px/12px Helvetica,Arial,Sans-serif;
+	text-decoration: none;
+}
+.tweet img {
+	border-radius: 5px 5px 5px 5px;
+	float: left;
+	margin-right: 10px;
+	margin-top: 6px;
+}
+.well {
+	background-color: #46B8DF;
+	border-radius: 10px;
+	padding: 14px 20px;
+}
+.well .fullname a {
+	color: #FFF;
+	font: normal 12px/12px Helvetica,Arial,Sans-serif;
+	text-decoration: none;
+}
+.prev {
+	color: #FFF;
+	font: normal 2em/1em arial;
+	left: 50%;
+	margin-left: -290px;
+	position: fixed;
+	text-decoration: none;
+	top: 250px;
+}
+.next {
+	color: #FFF;
+	font: normal 2em/1em arial;
+	left: 50%;
+	margin-left: 258px;
+	position: fixed;
+	text-decoration: none;
+	top: 250px;
+}
+a:hover.prev {
+	color: #46B8DF;
+}
+a:hover.next {
+	color: #46B8DF;
+}
