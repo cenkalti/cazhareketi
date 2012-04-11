@@ -90,12 +90,25 @@ $(function(){
         className: 'tweet',
         template : _.template($("#tweet-template").html()),
 
+        events: {
+            "click": "play"
+        },
+
         render : function() {
             this.el.innerHTML = this.template(this.model.toJSON());
             return this;
         },
 
         play: function() {
+            current = tweetCollectionView.getPlayingTweetView();
+            if (current) {
+                current.$el.removeClass("well");
+            }
+            this.$el.addClass("well");
+            index = tweets.indexOf(this.model);
+            log('index = ' + index);
+            tweetCollectionView.currentTrackNumber = index;
+
             id = this.model.getYoutubeId();
             log(id);
             if (id) {
@@ -125,7 +138,7 @@ $(function(){
         },
 
         _loadTweets: function(sinceId) {
-            log('loading tweets');
+            log('loading tweets...');
             var that = this;
             params = {
                 q: '%23cazhareketi', 
@@ -166,8 +179,8 @@ $(function(){
             // bind the functions 'add' and 'remove' to the view.
             _(this).bindAll('add', 'remove');
 
-            this._tweetViews = [];
-            this.currentTrack = -1;
+            this.tweetViews = [];
+            this.currentTrackNumber = -1;
          
             // add each tweet to the view
             this.collection.each(this.add);
@@ -184,7 +197,7 @@ $(function(){
           });
        
           // And add it to the collection so that it's easy to reuse.
-          this._tweetViews.push(tv);
+          this.tweetViews.push(tv);
        
           // If the view has been rendered, then
           // we immediately append the rendered tweet.
@@ -194,8 +207,8 @@ $(function(){
         },
        
         remove : function(model) {
-          var viewToRemove = _(this._tweetViews).select(function(tv) { return tv.model === model; })[0];
-          this._tweetViews = _(this._tweetViews).without(viewToRemove);
+          var viewToRemove = _(this.tweetViews).select(function(tv) { return tv.model === model; })[0];
+          this.tweetViews = _(this.tweetViews).without(viewToRemove);
        
           if (this._rendered) viewToRemove.$el.remove();
         },
@@ -209,48 +222,46 @@ $(function(){
             this.$el.empty();
          
             // Render each Rweet View and append them.
-            _(this._tweetViews).each(function(tv) {
+            _(this.tweetViews).each(function(tv) {
               that.$el.append(tv.render().el);
             });
          
             return this;
         },
 
-        scrollToPlayingTweet: function () {
-            this.$el.scrollTop(0);
+        getPlayingTweetView: function () {
+            if (this.currentTrackNumber > -1) {
+                return this.tweetViews[this.currentTrackNumber];
+            }
         },
   
         _playCurrent: function() {
-            var currentTweetView = this._tweetViews[this.currentTrack];
-            currentTweetView.$el.addClass("well");
-            currentTweetView.play();
+            this.getPlayingTweetView().play();
             this._scrollToCurrentTweet();
         },
 
         _scrollToCurrentTweet: function() {
-            var currentTweetView = this._tweetViews[this.currentTrack];
-            $('body').animate({
-                scrollTop: currentTweetView.$el.offset().top - 460
-            }, 1000);
+            $('html, body').animate({
+                scrollTop: this.getPlayingTweetView().$el.offset().top - 460 // 460 is the player height
+            }, 500);
         },
   
         playNext: function() {
-            if (this._tweetViews.length == 0) return;
-            if (this.currentTrack < this._tweetViews.length - 1) {
-                if (this.currentTrack > -1) {
-                    this._tweetViews[this.currentTrack].$el.removeClass("well");
-                }
-                this.currentTrack++;
-                this._playCurrent();
-            } else {
+            // load new tweets if this is the last tweet in this list
+            if (this.currentTrackNumber == this.tweetViews.length - 1) {
                 tweets.loadSomeMore();
+            }
+            // do not allow to play the next after the last tweet in the list
+            if (this.currentTrackNumber < this.tweetViews.length - 1) {
+                this.currentTrackNumber++;
+                this._playCurrent();
             }
         },
   
         playPrevious: function() {
-            if (this.currentTrack > 0) {
-                this._tweetViews[this.currentTrack].$el.removeClass("well");
-                this.currentTrack--;
+            // do not allow to go before the first tweet
+            if (this.currentTrackNumber > 0) {
+                this.currentTrackNumber--;
                 this._playCurrent();
             }
         }
