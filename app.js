@@ -100,10 +100,7 @@ $(function(){
         },
 
         play: function() {
-            current = tweetCollectionView.getPlayingTweetView();
-            if (current) {
-                current.$el.removeClass("well");
-            }
+            $(this.tagName).removeClass("well");
             this.$el.addClass("well");
             index = tweets.indexOf(this.model);
             log('index = ' + index);
