@@ -17,7 +17,6 @@ function onYouTubePlayerAPIReady() {
 // parseUri 1.2.2
 // (c) Steven Levithan <stevenlevithan.com>
 // MIT License
-
 function parseUri (str) {
     var o   = parseUri.options,
         m   = o.parser[o.strictMode ? "strict" : "loose"].exec(str),
@@ -33,7 +32,6 @@ function parseUri (str) {
 
     return uri;
 };
-
 parseUri.options = {
     strictMode: false,
     key: ["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"],
@@ -46,6 +44,32 @@ parseUri.options = {
         loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
     }
 };
+
+
+function convert_twitter_timestamp (time) {
+    date = new Date(Date.parse(time));
+    diff = (((new Date()).getTime() - date.getTime()) / 1000);
+    day_diff = Math.floor(diff / 86400);
+
+    if (diff < 60)
+      "şimdi"
+    else if (diff < 120)
+      return "1 dakika önce";
+    else if (diff < 3600)
+      return Math.floor(diff / 60) + " dakika önce";
+    else if (diff < 7200)
+      return "1 saat önce";
+    else if (diff < 86400)
+      return Math.floor(diff / 3600) + " saat önce";
+    else if (day_diff == 1)
+      return "Dün";
+    else if (day_diff <= 7)
+      return day_diff + " gün önce";
+    else if (day_diff < 31)
+      return Math.ceil(day_diff / 7) + " hafta önce";
+    else
+      return "Uzun zaman önce";
+}
 
 
 $(function(){

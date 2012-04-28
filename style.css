@@ -74,8 +74,6 @@ h1.logo {
 }
 .well .fullname a {
 	color: #FFF;
-	font: normal 12px/12px Helvetica,Arial,Sans-serif;
-	text-decoration: none;
 }
 .prev {
 	color: #FFF;
@@ -100,4 +98,12 @@ a:hover.prev {
 }
 a:hover.next {
 	color: #46B8DF;
+}
+.time {
+	float: right;
+	color: #69BFE8;
+	font: normal 12px/12px Helvetica,Arial,Sans-serif;
+}
+.well .time {
+	color: #FFF;
 }
