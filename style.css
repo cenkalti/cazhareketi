@@ -45,6 +45,14 @@ h1.logo {
 	margin: 0 0 30px 0;
 	padding: 0px 20px;
 }
+.tweet-header {
+	margin: 0 0 0 58px;
+}
+.tweet-header a {
+	color: #69BFE8;
+	font: normal 12px/12px Helvetica,Arial,Sans-serif;
+	text-decoration: none;
+}
 .tweet p {
 	color: #FFF;
 	font: normal 16px/21px Helvetica,Arial,Sans-serif;
@@ -56,23 +64,19 @@ h1.logo {
 	font: normal 16px/21px Helvetica,Arial,Sans-serif;
 	text-decoration: underline;
 }
-.tweet .fullname a {
-	color: #69BFE8;
-	font: normal 12px/12px Helvetica,Arial,Sans-serif;
-	text-decoration: none;
-}
-.tweet img {
-	border-radius: 5px 5px 5px 5px;
+.tweet .avatar {
 	float: left;
-	margin-right: 10px;
-	margin-top: 6px;
+}
+.tweet .avatar img{
+	border-radius: 5px 5px 5px 5px;
 }
 .well {
 	background-color: #46B8DF;
 	border-radius: 10px;
-	padding: 14px 20px 34px 20px;
+	padding: 14px 20px 14px 20px;
+	min-height: 50px;
 }
-.well .fullname a {
+.well .tweet-header a{
 	color: #FFF;
 }
 .prev {

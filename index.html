@@ -26,13 +26,15 @@
 
 
 <script id="tweet-template" type="text/template">
-    <a href="https://twitter.com/<%= from_user %>">
+    <a class="avatar" href="https://twitter.com/<%= from_user %>">
         <img width="48" height="48" src="<%= profile_image_url %>" alt="<%= from_user_name %>">
     </a>
 
-    <div class="fullname">
-        <a href="https://twitter.com/<%= from_user %>"><%= from_user_name %></a>
-        <a class="username" href="https://twitter.com/<%= from_user %>">@<%= from_user %></a>
+    <div class="tweet-header">
+        <a href="https://twitter.com/<%= from_user %>">
+            <span class="fullname"><%= from_user_name %></span>
+            <span class="username">@<%= from_user %></span>
+        </a>
         <span class="time"><%= convert_twitter_timestamp(created_at) %></span>
     </div>
 
