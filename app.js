@@ -11,64 +11,7 @@ function onYouTubePlayerAPIReady() {
         el: $(".tweets")[0]
     });
     tweetCollectionView.render();
-}
-
-
-// parseUri 1.2.2
-// (c) Steven Levithan <stevenlevithan.com>
-// MIT License
-function parseUri (str) {
-    var o   = parseUri.options,
-        m   = o.parser[o.strictMode ? "strict" : "loose"].exec(str),
-        uri = {},
-        i   = 14;
-
-    while (i--) uri[o.key[i]] = m[i] || "";
-
-    uri[o.q.name] = {};
-    uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
-        if ($1) uri[o.q.name][$1] = $2;
-    });
-
-    return uri;
-};
-parseUri.options = {
-    strictMode: false,
-    key: ["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"],
-    q:   {
-        name:   "queryKey",
-        parser: /(?:^|&)([^&=]*)=?([^&]*)/g
-    },
-    parser: {
-        strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
-        loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
-    }
-};
-
-
-function convert_twitter_timestamp (time) {
-    date = new Date(Date.parse(time));
-    diff = (((new Date()).getTime() - date.getTime()) / 1000);
-    day_diff = Math.floor(diff / 86400);
-
-    if (diff < 60)
-      "şimdi"
-    else if (diff < 120)
-      return "1 dakika önce";
-    else if (diff < 3600)
-      return Math.floor(diff / 60) + " dakika önce";
-    else if (diff < 7200)
-      return "1 saat önce";
-    else if (diff < 86400)
-      return Math.floor(diff / 3600) + " saat önce";
-    else if (day_diff == 1)
-      return "Dün";
-    else if (day_diff <= 7)
-      return day_diff + " gün önce";
-    else if (day_diff < 31)
-      return Math.ceil(day_diff / 7) + " hafta önce";
-    else
-      return "Uzun zaman önce";
+    tweets.startFetching();
 }
 
 
@@ -90,6 +33,8 @@ $(function(){
                 } else if (host == "youtu.be") {
                     log('youtu.be link');
                     id = p.path.substr(1);
+                } else {
+                    id = null;
                 }
                 log('id = ' + id);
                 return id;
@@ -112,15 +57,23 @@ $(function(){
 
         tagName: 'div',
         className: 'tweet',
-        template : _.template($("#tweet-template").html()),
+        template: _.template($("#tweet-template").html()),
 
         events: {
             "click": "play"
         },
 
-        render : function() {
+        initialize: function() {
+            this.isPlaying = false;
+        },
+
+        render: function() {
             this.el.innerHTML = this.template(this.model.toJSON());
             return this;
+        },
+
+        _validate: function () {
+            return true;
         },
 
         play: function() {
@@ -128,15 +81,37 @@ $(function(){
             this.$el.addClass("well");
             index = tweets.indexOf(this.model);
             log('index = ' + index);
-            tweetCollectionView.currentTrackNumber = index;
 
             id = this.model.getYoutubeId();
             log(id);
+
+            tweetCollectionView.tweetViews.each(function(view){
+                view.isPlaying = false;
+            });
+            this.isPlaying = true;
+
             if (id) {
+                log('id is ok. playing with player...');
                 playerView.play(id);
+                tweetCollectionView.scrollToTweetView(this);
             } else {
+                log('id is not ok. trying next view...');
                 tweetCollectionView.playNext();
             }
+        },
+
+        getNextView: function () {
+            log('getNextView');
+            var i = tweetCollectionView.tweetViews.indexOf(this);
+            log('current index = ' + i);
+            return tweetCollectionView.tweetViews.at(++i);
+        },
+
+        getPreviousView: function () {
+            log('getPreviousView');
+            var i = tweetCollectionView.tweetViews.indexOf(this);
+            log('current index = ' + i);
+            return tweetCollectionView.tweetViews.at(--i);
         }
     });
     
@@ -144,18 +119,21 @@ $(function(){
         model: Tweet,
 
         initialize: function () {
+            this.isFirstFetch = true;
+        },
+
+        comparator: function (t) {
+            log('in comparator. id= ' + t.id);
+            var rank = t.get("id");
+            return rank;
+        },
+
+        startFetching: function () {
             var that = this;
             this._loadTweets();
             setInterval(function(){
                 that._loadTweets();
             }, 60000);
-        },
-
-        loadSomeMore: function () {
-            log('loading some more tweets');
-            lastTweet = this.max(function(t){return t.id});
-            log('max id: ' + lastTweet.id);
-            this._loadTweets(lastTweet.id);
         },
 
         _loadTweets: function(sinceId) {
@@ -178,15 +156,23 @@ $(function(){
 
                 success: function(data){
                     log("fetched " + data.results.length + ' tweets');
-                    sorted = _.sortBy(data.results, function(t){return t.id});
-                    sorted.forEach(function(t){
+                    data.results.forEach(function(t){
                         log("adding " + t.id);
-                        tweet = new Tweet(t);
-                        if (!tweet.isRetweet()) {
-                            that.add(tweet);
+                        current_model = that.get(t.id);
+
+                        if (!current_model) {
+                            var tweet = new Tweet(t);
+
+                            if (!tweet.isRetweet()) {
+                                that.add(tweet);
+                            }
                         }
                     });
-                    if (!playerView.isPlaying()) {
+
+                    if (that.isFirstFetch) {
+                        that.isFirstFetch = false;
+                        tweetCollectionView.playFirst();
+                    } else if (!playerView.isPlaying()) {
                         tweetCollectionView.playNext();
                     }
                 }
@@ -194,97 +180,87 @@ $(function(){
         },
     });
     
+    window.TweetViews = Backbone.Collection.extend({
+        model: TweetView,
+
+        comparator: function (tv) {
+            log('in comparator. id= ' + tv.model.get('id'));
+            var rank = tv.model.get('id');
+            return rank;
+        }
+    });
+    
     window.TweetCollectionView = Backbone.View.extend({
 
         initialize: function() {
-            // bind the functions 'add' and 'remove' to the view.
-            _(this).bindAll('add', 'remove');
+            _(this).bindAll('add_to_list');
 
-            this.tweetViews = [];
-            this.currentTrackNumber = -1;
+            this.tweetViews = new TweetViews();
          
             // add each tweet to the view
-            this.collection.each(this.add);
+            this.collection.each(this.add_to_list);
          
             // bind this view to the add and remove events of the collection!
-            this.collection.bind('add', this.add);
-            this.collection.bind('remove', this.remove);
+            this.collection.bind('add', this.add_to_list);
         },
  
-        add : function(tweet) {
-          // We create an updating tweet view for each tweet that is added.
-          var tv = new TweetView({
-            model : tweet
-          });
-       
-          // And add it to the collection so that it's easy to reuse.
-          this.tweetViews.push(tv);
-       
-          // If the view has been rendered, then
-          // we immediately append the rendered tweet.
-          if (this._rendered) {
-            $(this.el).append(tv.render().el);
-          }
-        },
-       
-        remove : function(model) {
-          var viewToRemove = _(this.tweetViews).select(function(tv) { return tv.model === model; })[0];
-          this.tweetViews = _(this.tweetViews).without(viewToRemove);
-       
-          if (this._rendered) viewToRemove.$el.remove();
+        add_to_list : function(tweet) {
+            var index = this.collection.indexOf(tweet);
+            var view = new TweetView({model: tweet});
+            this.tweetViews.add(view);
+            el = view.render().el
+            if (index > 0) {
+                $(this.$('.tweet')[index - 1]).after(el);
+            } else {
+                this.$el.prepend(el);
+            }
         },
      
         render: function() {
             var that = this;
-
-            // We keep track of the rendered state of the view
-            this._rendered = true;
-         
             this.$el.empty();
-         
-            // Render each Rweet View and append them.
-            _(this.tweetViews).each(function(tv) {
-              that.$el.append(tv.render().el);
+            this.collection.each(function (t) {
+                that.add_to_list(t);
             });
-         
             return this;
         },
 
         getPlayingTweetView: function () {
-            if (this.currentTrackNumber > -1) {
-                return this.tweetViews[this.currentTrackNumber];
-            }
-        },
-  
-        _playCurrent: function() {
-            this.getPlayingTweetView().play();
-            this._scrollToCurrentTweet();
+            return tweetCollectionView.tweetViews.find(function(view){
+                return view.isPlaying;
+            });
         },
 
-        _scrollToCurrentTweet: function() {
+        scrollToTweetView: function (tv) {
+            log('scrollToTweetView');
             $('html, body').animate({
-                scrollTop: this.getPlayingTweetView().$el.offset().top - 460 // 460 is the player height
+                scrollTop: tv.$el.offset().top - 460 // 460 is the player height
             }, 500);
         },
   
         playNext: function() {
-            // load new tweets if this is the last tweet in this list
-            if (this.currentTrackNumber == this.tweetViews.length - 1) {
-                tweets.loadSomeMore();
-            }
-            // do not allow to play the next after the last tweet in the list
-            if (this.currentTrackNumber < this.tweetViews.length - 1) {
-                this.currentTrackNumber++;
-                this._playCurrent();
+            current = this.getPlayingTweetView();
+            if (current) {
+                next = current.getNextView();
+                if (next) {
+                    next.play();
+                }
             }
         },
   
         playPrevious: function() {
-            // do not allow to go before the first tweet
-            if (this.currentTrackNumber > 0) {
-                this.currentTrackNumber--;
-                this._playCurrent();
+            current = this.getPlayingTweetView();
+            if (current) {
+                previous = current.getPreviousView();
+                if (previous) {
+                    previous.play();
+                }
             }
+        },
+
+        playFirst: function () {
+            first = this.tweetViews.min(function(tv){return tv.model.get('id')});
+            first.play();
         }
     });
     
@@ -330,7 +306,9 @@ $(function(){
         },
 
         isPlaying: function () {
-            return this.player;
+            if (this.player) {
+                return this.player.getPlayerState() != YT.PlayerState.ENDED;
+            }
         },
 
         onPlayerReady: function(event) {
@@ -353,3 +331,61 @@ $(function(){
     
     window.playerView = new PlayerView({el: $('.video')[0]});
 });
+
+
+// parseUri 1.2.2
+// (c) Steven Levithan <stevenlevithan.com>
+// MIT License
+function parseUri (str) {
+    var o   = parseUri.options,
+        m   = o.parser[o.strictMode ? "strict" : "loose"].exec(str),
+        uri = {},
+        i   = 14;
+
+    while (i--) uri[o.key[i]] = m[i] || "";
+
+    uri[o.q.name] = {};
+    uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
+        if ($1) uri[o.q.name][$1] = $2;
+    });
+
+    return uri;
+};
+parseUri.options = {
+    strictMode: false,
+    key: ["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"],
+    q:   {
+        name:   "queryKey",
+        parser: /(?:^|&)([^&=]*)=?([^&]*)/g
+    },
+    parser: {
+        strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+        loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+    }
+};
+
+
+function convert_twitter_timestamp (time) {
+    date = new Date(Date.parse(time));
+    diff = (((new Date()).getTime() - date.getTime()) / 1000);
+    day_diff = Math.floor(diff / 86400);
+
+    if (diff < 60)
+      return "şimdi"
+    else if (diff < 120)
+      return "1 dakika önce";
+    else if (diff < 3600)
+      return Math.floor(diff / 60) + " dakika önce";
+    else if (diff < 7200)
+      return "1 saat önce";
+    else if (diff < 86400)
+      return Math.floor(diff / 3600) + " saat önce";
+    else if (day_diff == 1)
+      return "Dün";
+    else if (day_diff <= 7)
+      return day_diff + " gün önce";
+    else if (day_diff < 31)
+      return Math.ceil(day_diff / 7) + " hafta önce";
+    else
+      return "Uzun zaman önce";
+}
