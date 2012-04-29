@@ -193,6 +193,7 @@ $(function(){
     window.TweetCollectionView = Backbone.View.extend({
 
         initialize: function() {
+            var self = this;
             _(this).bindAll('add_to_list');
 
             this.tweetViews = new TweetViews();
@@ -202,6 +203,12 @@ $(function(){
          
             // bind this view to the add and remove events of the collection!
             this.collection.bind('add', this.add_to_list);
+
+            setInterval(function (argument) {
+                self.tweetViews.each(function(tv){
+                    tv.render();
+                });
+            }, 60000);
         },
  
         add_to_list : function(tweet) {
